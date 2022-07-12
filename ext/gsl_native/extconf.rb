@@ -23,14 +23,16 @@ def create_conf_h(file) #:nodoc:
     hfile.puts "#define RUBY_2 1" if RUBY_VERSION >= '2.0'
     hfile.puts "#define RUBY_3 1" if RUBY_VERSION >= '3.0'
 
-    for line in $defs
-      line =~ /^-D(.*)/
-      match_data = $1.dup
+    unless find_header('gsl/gsl_version.h')
+      for line in $defs
+        line =~ /^-D(.*)/
+        match_data = $1.dup
 
-      if match_data.match(/GSL_VERSION*/)
-        hfile.printf "#define #{match_data.to_s.split('=').join(' ')}\n"
-      else
-        hfile.printf "#define %s 1\n", match_data
+        if match_data.match(/GSL_VERSION*/)
+          hfile.printf "#define #{match_data.to_s.split('=').join(' ')}\n"
+        else
+          hfile.printf "#define %s 1\n", match_data
+        end
       end
     end
 
