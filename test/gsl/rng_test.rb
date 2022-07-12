@@ -192,6 +192,7 @@ class RngTest < GSL::TestCase
 
     assert((0...N).all? { |i| test_b[i] == test_a[i] }, "#{r.name}, random number generator read and write")
   ensure
+    r = nil
     File.delete('test.dat') if FileTest.exist?('test.dat')
   end
 
