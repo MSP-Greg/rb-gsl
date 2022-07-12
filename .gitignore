@@ -11,3 +11,6 @@ extconf.h
 Gemfile.lock
 *~
 *.gem
+vendor
+.bundle
+
