@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    name: >-
+      ${{ matrix.os }} ${{ matrix.ruby }}
+    env:
+      CI: true
+      TESTOPTS: -v
+
+    runs-on: ${{ matrix.os }}
+    if: |
+      !(   contains(github.event.pull_request.title,  '[ci skip]')
+        || contains(github.event.pull_request.title,  '[skip ci]'))
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-20.04, macos-11, windows-2022 ]
+        ruby: [ 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, '3.0', 3.1, head ]
+        no-ssl: ['']
+        yjit: ['']
+        include:
+          - { os: windows-2022 , ruby: ucrt }
+          - { os: windows-2022 , ruby: mswin }
+          - { os: ubuntu-20.04 , ruby: head , yjit: ' yjit' }
+          - { os: ubuntu-22.04 , ruby: 3.1  }
+          - { os: ubuntu-22.04 , ruby: head }
+
+        exclude:
+          - { os: ubuntu-20.04 , ruby: 2.2  }
+          - { os: ubuntu-20.04 , ruby: 2.3  }
+          - { os: windows-2022 , ruby: head }
+          - { os: macos-11     , ruby: 2.2  }
+          - { os: macos-11     , ruby: 2.3  }
+          - { os: macos-11     , ruby: 2.4  }
+
+    steps:
+      - name: repo checkout
+        uses: actions/checkout@v3
+
+      - name: load ruby
+        uses: ruby/setup-ruby-pkgs@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          apt-get: libgsl0-dev
+          brew: gsl
+          mingw: gsl
+          bundler-cache: true
+        timeout-minutes: 10
+
+      # Windows error thrown, doesn't affect CI
+      - name: update rubygems for Ruby 2.2
+        if: matrix.ruby < '2.3'
+        run: gem update --system 2.7.11 --no-document
+        continue-on-error: true
+        timeout-minutes: 5
+
+      # fixes 'has a bug that prevents `required_ruby_version`'
+      - name: update rubygems for Ruby 2.3 - 2.5
+        if: contains('2.3 2.4 2.5', matrix.ruby)
+        run: gem update --system 3.3.14 --no-document
+        continue-on-error: true
+        timeout-minutes: 5
+
+      - name: compile
+        run:  bundle exec rake compile
+
+      - name: Use yjit
+        if: matrix.yjit == ' yjit'
+        shell: bash
+        run: echo 'RUBYOPT=--yjit' >> $GITHUB_ENV
+
+      - name: test
+        timeout-minutes: 10
+        run: bundle exec rake test
