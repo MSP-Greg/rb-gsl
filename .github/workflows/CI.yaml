@@ -36,8 +36,8 @@ jobs:
           - { os: ubuntu-22.04 , ruby: head }
 
         exclude:
-          - { os: ubuntu-20.04 , ruby: 2.2  }
-          - { os: ubuntu-20.04 , ruby: 2.3  }
+          - { os: windows-2022 , ruby: 2.2 }
+          - { os: windows-2022 , ruby: 2.3 }
           - { os: windows-2022 , ruby: head }
           - { os: macos-11     , ruby: 2.2  }
           - { os: macos-11     , ruby: 2.3  }
@@ -54,6 +54,7 @@ jobs:
           apt-get: libgsl0-dev
           brew: gsl
           mingw: gsl
+          vcpkg: gsl
           bundler-cache: true
         timeout-minutes: 10
 
