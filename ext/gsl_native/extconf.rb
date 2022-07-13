@@ -23,7 +23,13 @@ def create_conf_h(file) #:nodoc:
     hfile.puts "#define RUBY_2 1" if RUBY_VERSION >= '2.0'
     hfile.puts "#define RUBY_3 1" if RUBY_VERSION >= '3.0'
 
-    unless find_header('gsl/gsl_version.h')
+    STDOUT.syswrite "\npkg_config('gsl') #{pkg_config 'gsl'}\n\n"
+
+    vers = have_header 'gsl/gsl_version.h'
+
+STDOUT.syswrite "\ngsl/gsl_version.h #{vers}\n\n"
+
+    unless vers
       for line in $defs
         line =~ /^-D(.*)/
         match_data = $1.dup
