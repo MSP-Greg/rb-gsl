@@ -93,30 +93,32 @@ end
 
 $CFLAGS += ' -Wall -Iinclude'
 
-gsl_config_arg(:version) { |version, check|
-  gsl_def(:GSL_VERSION, check[version])
+unless RUBY_PLATFORM.include? 'mswin'
+  gsl_config_arg(:version) { |version, check|
+    gsl_def(:GSL_VERSION, check[version])
 
-  ver = version.split('.').map { |x| x.to_i }
+    ver = version.split('.').map { |x| x.to_i }
 
-  later = lambda { |other|
-    ary = other.split('.').map { |x| x.to_i }
+    later = lambda { |other|
+      ary = other.split('.').map { |x| x.to_i }
 
-    gte = ver[0] > ary[0] ? true  :
-          ver[0] < ary[0] ? false :
-          ver[1] > ary[1] ? true  :
-          ver[1] < ary[1] ? false :
-          ver.size < ary.size ? false :
-          ver.size == 3 && ary.size == 3 ? ver[2] >= ary[2] : true
+      gte = ver[0] > ary[0] ? true  :
+            ver[0] < ary[0] ? false :
+            ver[1] > ary[1] ? true  :
+            ver[1] < ary[1] ? false :
+            ver.size < ary.size ? false :
+            ver.size == 3 && ary.size == 3 ? ver[2] >= ary[2] : true
 
-    ary.pop && ary[-1] += 1 if ary.last == 90
+      ary.pop && ary[-1] += 1 if ary.last == 90
 
-    gte && gsl_def("GSL_#{ary.join('_')}_LATER")
+      gte && gsl_def("GSL_#{ary.join('_')}_LATER")
+    }
+
+    raise 'Ruby/GSL requires gsl-1.15 or later.' unless later['1.15']
+
+    %w[1.15 1.16 2.0 2.1].each { |v| later[v] }
   }
-
-  raise 'Ruby/GSL requires gsl-1.15 or later.' unless later['1.15']
-
-  %w[1.15 1.16 2.0 2.1].each { |v| later[v] }
-}
+end
 
 gsl_config_arg(:cflags) { |cflags, check|
   $CFLAGS += ' ' + check[cflags]
